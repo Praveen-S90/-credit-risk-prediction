@@ -1,0 +1,826 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <meta
+      name="description"
+      content="Explainable AI-Based Credit Risk Prediction System"
+    />
+
+    <title>CreditAI — Explainable Credit Risk Prediction</title>
+
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+  </head>
+
+  <body>
+    <!-- =====================================================
+         NAVIGATION
+         ===================================================== -->
+
+    <nav class="navbar">
+      <div class="nav-container">
+        <a href="#" class="logo">
+          <span class="logo-icon">✦</span>
+          <span>Credit<span class="logo-gradient">AI</span></span>
+        </a>
+
+        <div class="nav-links">
+          <a href="#home">Home</a>
+
+          <a href="#prediction">Prediction</a>
+
+          <a href="#explainability">Explainability</a>
+
+          <a href="#about">About</a>
+        </div>
+
+        <a href="#prediction" class="nav-button">
+          Start Analysis
+          <span>→</span>
+        </a>
+      </div>
+    </nav>
+
+    <!-- =====================================================
+         HERO SECTION
+         ===================================================== -->
+
+    <main id="home">
+      <section class="hero">
+        <!-- Background glow -->
+
+        <div class="hero-glow glow-one"></div>
+
+        <div class="hero-glow glow-two"></div>
+
+        <div class="hero-glow glow-three"></div>
+
+        <div class="hero-content">
+          <div class="hero-badge">
+            <span class="badge-dot"></span>
+
+            Explainable AI Credit Intelligence
+          </div>
+
+          <h1>
+            Smarter Credit Decisions
+            <br />
+
+            <span class="gradient-text"> Powered by Explainable AI. </span>
+          </h1>
+
+          <p class="hero-description">
+            Predict credit risk with machine learning and understand exactly
+            <strong>why</strong>
+            the model made its decision using SHAP and LIME explanations.
+          </p>
+
+          <div class="hero-buttons">
+            <a href="#prediction" class="primary-button">
+              ✦ Analyze Applicant
+
+              <span>→</span>
+            </a>
+
+            <a href="#about" class="secondary-button"> Learn More </a>
+          </div>
+
+          <!-- Small statistics -->
+
+          <div class="hero-stats">
+            <div class="stat">
+              <strong>3</strong>
+
+              <span>ML Models</span>
+            </div>
+
+            <div class="stat-divider"></div>
+
+            <div class="stat">
+              <strong>SHAP</strong>
+
+              <span>Global AI</span>
+            </div>
+
+            <div class="stat-divider"></div>
+
+            <div class="stat">
+              <strong>LIME</strong>
+
+              <span>Local AI</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- =================================================
+                 FLOATING AI VISUAL
+                 ================================================= -->
+
+        <div class="hero-visual">
+          <div class="ai-orb">
+            <div class="orb-core">AI</div>
+
+            <div class="orb-ring ring-one"></div>
+
+            <div class="orb-ring ring-two"></div>
+
+            <div class="orb-ring ring-three"></div>
+          </div>
+
+          <div class="floating-card card-top">
+            <span class="mini-icon purple"> ✦ </span>
+
+            <div>
+              <small>AI Model</small>
+
+              <strong>Analyzing</strong>
+            </div>
+          </div>
+
+          <div class="floating-card card-bottom">
+            <span class="mini-icon green"> ✓ </span>
+
+            <div>
+              <small>Explainability</small>
+
+              <strong>Enabled</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================
+             PREDICTION SECTION
+             ===================================================== -->
+
+      <section id="prediction" class="prediction-section">
+        <div class="section-heading">
+          <div class="section-tag">AI CREDIT ANALYSIS</div>
+
+          <h2>Analyze an Applicant</h2>
+
+          <p>
+            Enter applicant information and let our machine learning model
+            estimate credit risk.
+          </p>
+        </div>
+
+        <!-- =================================================
+                 FORM CARD
+                 ================================================= -->
+
+        <div class="prediction-card">
+          <div class="card-header">
+            <div>
+              <span class="card-label"> APPLICANT PROFILE </span>
+
+              <h3>👤 Applicant Information</h3>
+            </div>
+
+            <div class="secure-badge">
+              <span>●</span>
+
+              AI Analysis
+            </div>
+          </div>
+
+          <form id="creditForm">
+            <!-- =========================================
+                         FINANCIAL INFORMATION
+                         ========================================= -->
+
+            <div class="form-section">
+              <div class="form-section-title">
+                <span class="section-number"> 01 </span>
+
+                Financial Information
+              </div>
+
+              <div class="form-grid">
+                <!-- Checking Status -->
+
+                <div class="form-group">
+                  <label for="checking_status"> Checking Account Status </label>
+
+                  <select id="checking_status" name="checking_status" required>
+                    <option value="">Select status</option>
+
+                    <option value="A11">A11 — No checking account</option>
+
+                    <option value="A12">A12 — Balance below 0 DM</option>
+
+                    <option value="A13">A13 — Balance 0–200 DM</option>
+
+                    <option value="A14">A14 — Balance above 200 DM</option>
+                  </select>
+                </div>
+
+                <!-- Duration -->
+
+                <div class="form-group">
+                  <label for="duration"> Loan Duration (Months) </label>
+
+                  <input
+                    type="number"
+                    id="duration"
+                    name="duration"
+                    min="1"
+                    max="100"
+                    placeholder="Example: 24"
+                    required
+                  />
+                </div>
+
+                <!-- Credit Amount -->
+
+                <div class="form-group">
+                  <label for="credit_amount"> Credit Amount (DM) </label>
+
+                  <input
+                    type="number"
+                    id="credit_amount"
+                    name="credit_amount"
+                    min="1"
+                    placeholder="Example: 2500"
+                    required
+                  />
+                </div>
+
+                <!-- Savings -->
+
+                <div class="form-group">
+                  <label for="savings_status"> Savings Account </label>
+
+                  <select id="savings_status" name="savings_status" required>
+                    <option value="">Select savings status</option>
+
+                    <option value="A61">A61 — Below 100 DM</option>
+
+                    <option value="A62">A62 — 100–500 DM</option>
+
+                    <option value="A63">A63 — 500–1000 DM</option>
+
+                    <option value="A64">A64 — Above 1000 DM</option>
+
+                    <option value="A65">A65 — Unknown / no savings</option>
+                  </select>
+                </div>
+
+                <!-- Installment Rate -->
+
+                <div class="form-group">
+                  <label for="installment_rate"> Installment Rate (%) </label>
+
+                  <input
+                    type="number"
+                    id="installment_rate"
+                    name="installment_rate"
+                    min="1"
+                    max="4"
+                    placeholder="1 - 4"
+                    required
+                  />
+                </div>
+
+                <!-- Existing Credits -->
+
+                <div class="form-group">
+                  <label for="existing_credits"> Existing Credits </label>
+
+                  <input
+                    type="number"
+                    id="existing_credits"
+                    name="existing_credits"
+                    min="0"
+                    max="10"
+                    placeholder="Example: 1"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- =========================================
+                         CREDIT HISTORY
+                         ========================================= -->
+
+            <div class="form-section">
+              <div class="form-section-title">
+                <span class="section-number"> 02 </span>
+
+                Credit History
+              </div>
+
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="credit_history"> Credit History </label>
+
+                  <select id="credit_history" name="credit_history" required>
+                    <option value="">Select history</option>
+
+                    <option value="A30">A30 — No credits / all paid</option>
+
+                    <option value="A31">A31 — All credits paid</option>
+
+                    <option value="A32">A32 — Existing paid credits</option>
+
+                    <option value="A33">A33 — Delay in paying</option>
+
+                    <option value="A34">A34 — Critical account</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="purpose"> Loan Purpose </label>
+
+                  <select id="purpose" name="purpose" required>
+                    <option value="">Select purpose</option>
+
+                    <option value="A40">A40 — New car</option>
+
+                    <option value="A41">A41 — Used car</option>
+
+                    <option value="A42">A42 — Furniture</option>
+
+                    <option value="A43">A43 — Radio / TV</option>
+
+                    <option value="A44">A44 — Domestic appliances</option>
+
+                    <option value="A45">A45 — Repairs</option>
+
+                    <option value="A46">A46 — Education</option>
+
+                    <option value="A47">A47 — Vacation</option>
+
+                    <option value="A48">A48 — Retraining</option>
+
+                    <option value="A49">A49 — Business</option>
+
+                    <option value="A410">A410 — Other</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="employment"> Employment Duration </label>
+
+                  <select id="employment" name="employment" required>
+                    <option value="">Select employment</option>
+
+                    <option value="A71">A71 — Unemployed</option>
+
+                    <option value="A72">A72 — Less than 1 year</option>
+
+                    <option value="A73">A73 — 1–4 years</option>
+
+                    <option value="A74">A74 — 4–7 years</option>
+
+                    <option value="A75">A75 — 7+ years</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="job"> Job Type </label>
+
+                  <select id="job" name="job" required>
+                    <option value="">Select job type</option>
+
+                    <option value="A171">
+                      A171 — Unskilled / non-resident
+                    </option>
+
+                    <option value="A172">A172 — Unskilled / resident</option>
+
+                    <option value="A173">A173 — Skilled employee</option>
+
+                    <option value="A174">
+                      A174 — Management / self-employed
+                    </option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- =========================================
+                         PERSONAL INFORMATION
+                         ========================================= -->
+
+            <div class="form-section">
+              <div class="form-section-title">
+                <span class="section-number"> 03 </span>
+
+                Personal Information
+              </div>
+
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="personal_status"> Personal Status </label>
+
+                  <select id="personal_status" name="personal_status" required>
+                    <option value="">Select status</option>
+
+                    <option value="A91">A91 — Male, divorced/separated</option>
+
+                    <option value="A92">
+                      A92 — Female, divorced/separated/married
+                    </option>
+
+                    <option value="A93">A93 — Male, single</option>
+
+                    <option value="A94">A94 — Male, married/widowed</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="age"> Age </label>
+
+                  <input
+                    type="number"
+                    id="age"
+                    name="age"
+                    min="18"
+                    max="100"
+                    placeholder="Example: 30"
+                    required
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="residence_since"> Residence Since </label>
+
+                  <input
+                    type="number"
+                    id="residence_since"
+                    name="residence_since"
+                    min="1"
+                    max="4"
+                    placeholder="1 - 4 years"
+                    required
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="num_dependents"> Number of Dependents </label>
+
+                  <input
+                    type="number"
+                    id="num_dependents"
+                    name="num_dependents"
+                    min="1"
+                    max="10"
+                    placeholder="Example: 1"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- =========================================
+                         PROPERTY & HOUSING
+                         ========================================= -->
+
+            <div class="form-section">
+              <div class="form-section-title">
+                <span class="section-number"> 04 </span>
+
+                Property & Housing
+              </div>
+
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="property"> Property </label>
+
+                  <select id="property" name="property" required>
+                    <option value="">Select property</option>
+
+                    <option value="A121">A121 — Real estate</option>
+
+                    <option value="A122">A122 — Building society</option>
+
+                    <option value="A123">A123 — Car / other property</option>
+
+                    <option value="A124">A124 — Unknown / no property</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="housing"> Housing </label>
+
+                  <select id="housing" name="housing" required>
+                    <option value="">Select housing</option>
+
+                    <option value="A151">A151 — Rent</option>
+
+                    <option value="A152">A152 — Own</option>
+
+                    <option value="A153">A153 — Free</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="other_debtors">
+                    Other Debtors / Guarantors
+                  </label>
+
+                  <select id="other_debtors" name="other_debtors" required>
+                    <option value="">Select option</option>
+
+                    <option value="A101">A101 — None</option>
+
+                    <option value="A102">A102 — Co-applicant</option>
+
+                    <option value="A103">A103 — Guarantor</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="other_installment_plans">
+                    Other Installment Plans
+                  </label>
+
+                  <select
+                    id="other_installment_plans"
+                    name="other_installment_plans"
+                    required
+                  >
+                    <option value="">Select option</option>
+
+                    <option value="A141">A141 — Bank</option>
+
+                    <option value="A142">A142 — Stores</option>
+
+                    <option value="A143">A143 — None</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- =========================================
+                         ADDITIONAL INFORMATION
+                         ========================================= -->
+
+            <div class="form-section">
+              <div class="form-section-title">
+                <span class="section-number"> 05 </span>
+
+                Additional Information
+              </div>
+
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="telephone"> Telephone </label>
+
+                  <select id="telephone" name="telephone" required>
+                    <option value="">Select option</option>
+
+                    <option value="A191">A191 — No telephone</option>
+
+                    <option value="A192">A192 — Telephone registered</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="foreign_worker"> Foreign Worker </label>
+
+                  <select id="foreign_worker" name="foreign_worker" required>
+                    <option value="">Select option</option>
+
+                    <option value="A201">A201 — Yes</option>
+
+                    <option value="A202">A202 — No</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- =========================================
+                         ANALYZE BUTTON
+                         ========================================= -->
+
+            <div class="analysis-action">
+              <div class="action-info">
+                <span class="action-icon"> ✦ </span>
+
+                <div>
+                  <strong> Ready for AI Analysis? </strong>
+
+                  <small>
+                    Your information will be evaluated by the trained
+                    credit-risk model.
+                  </small>
+                </div>
+              </div>
+
+              <button type="submit" id="predictButton" class="analyze-button">
+                <span> ✦ </span>
+
+                Predict Credit Risk
+
+                <span> → </span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- =====================================================
+             RESULT SECTION
+             ===================================================== -->
+
+      <section id="resultSection" class="result-section">
+        <div class="section-heading">
+          <div class="section-tag">AI PREDICTION</div>
+
+          <h2>Prediction Result</h2>
+
+          <p>The machine learning model has analyzed the applicant profile.</p>
+        </div>
+
+        <div class="result-card">
+          <div class="result-icon">✦</div>
+
+          <div id="riskLabel">Analyzing...</div>
+
+          <div class="probability-grid">
+            <div class="probability-box low-box">
+              <span class="probability-icon"> ✓ </span>
+
+              <small> LOW RISK PROBABILITY </small>
+
+              <strong id="lowRisk"> 0% </strong>
+            </div>
+
+            <div class="probability-box high-box">
+              <span class="probability-icon"> ! </span>
+
+              <small> HIGH RISK PROBABILITY </small>
+
+              <strong id="highRisk"> 0% </strong>
+            </div>
+          </div>
+          <!-- RISK SCORE -->
+          <div class="risk-score-card">
+            <div class="risk-score-header">
+              <span>OVERALL RISK SCORE</span>
+              <strong id="riskScore">0%</strong>
+            </div>
+
+            <div class="risk-meter">
+              <div id="riskMeterFill" class="risk-meter-fill"></div>
+            </div>
+            <div class="risk-scale">
+              <span>LOW</span>
+              <span>MEDIUM</span>
+              <span>HIGH</span>
+            </div>
+
+            <div class="risk-level" id="riskLevel">LOW RISK</div>
+
+            <p id="riskMessage">
+              The applicant's risk assessment will appear here.
+            </p>
+          </div>
+          <div class="prediction-time">
+            Prediction generated: <span id="predictionTime">--</span>
+          </div>
+
+          <div class="prediction-note">
+            <span>✦</span>
+
+            Prediction generated using machine learning.
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================
+             EXPLAINABILITY SECTION
+             ===================================================== -->
+
+      <section id="explainability" class="explainability-section">
+        <div class="section-heading">
+          <div class="section-tag">TRANSPARENT AI</div>
+
+          <h2>🧠 Why Did AI Make This Decision?</h2>
+
+          <p>Understand which applicant features influenced the prediction.</p>
+        </div>
+
+        <!-- =====================================================
+     APPLICANT SUMMARY
+     ===================================================== -->
+
+        <div class="applicant-summary-card">
+          <div class="summary-header">
+            <span>APPLICANT SUMMARY</span>
+            <span class="summary-status">ASSESSED</span>
+          </div>
+
+          <div id="applicantSummary" class="applicant-summary-grid">
+            <!-- JavaScript inserts applicant details here -->
+          </div>
+        </div>
+
+        <!-- =====================================================
+     EXPLAINABILITY
+     ===================================================== -->
+
+        <div id="explainabilitySection" class="explainability-card">
+          <!-- JavaScript inserts SHAP/LIME results here -->
+        </div>
+      </section>
+
+      <!-- =====================================================
+             ABOUT SECTION
+             ===================================================== -->
+
+      <section id="about" class="about-section">
+        <div class="section-heading">
+          <div class="section-tag">ABOUT THE SYSTEM</div>
+
+          <h2>Credit Risk + Explainable AI</h2>
+
+          <p>
+            A transparent machine learning approach designed to make credit
+            predictions easier to understand.
+          </p>
+        </div>
+
+        <div class="about-grid">
+          <div class="about-card">
+            <div class="about-icon purple-icon">⚡</div>
+
+            <h3>Machine Learning</h3>
+
+            <p>
+              Logistic Regression, Random Forest and XGBoost models are
+              evaluated for credit-risk prediction.
+            </p>
+          </div>
+
+          <div class="about-card">
+            <div class="about-icon pink-icon">◈</div>
+
+            <h3>SHAP</h3>
+
+            <p>
+              SHAP helps identify the features that have the greatest influence
+              on the model's prediction.
+            </p>
+          </div>
+
+          <div class="about-card">
+            <div class="about-icon blue-icon">✧</div>
+
+            <h3>LIME</h3>
+
+            <p>
+              LIME provides local explanations showing why a specific applicant
+              received a prediction.
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- =====================================================
+         FOOTER
+         ===================================================== -->
+
+    <footer>
+      <div class="footer-content">
+        <div class="footer-logo">
+          <span class="logo-icon">✦</span>
+
+          Credit<span>AI</span>
+        </div>
+
+        <p>Explainable AI-Based Credit Risk Prediction System</p>
+
+        <small>
+          Built with Python • Flask • Machine Learning • SHAP • LIME
+        </small>
+      </div>
+    </footer>
+
+    
+<!-- =====================================================
+     JAVASCRIPT
+===================================================== -->
+
+<!-- Chart.js library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Your existing JavaScript file -->
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
+</body>
+</html>
+
+
+  </body>
+</html>
