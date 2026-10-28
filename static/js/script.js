@@ -1,559 +1,349 @@
+
 document.addEventListener("DOMContentLoaded", () => {
-
-    // =====================================================
-    // GET HTML ELEMENTS
-    // =====================================================
-
     const form = document.getElementById("creditForm");
     const resultSection = document.getElementById("resultSection");
     const riskLabel = document.getElementById("riskLabel");
     const lowRisk = document.getElementById("lowRisk");
     const highRisk = document.getElementById("highRisk");
-    const explainabilitySection =
-        document.getElementById("explainabilitySection");
-    const predictButton =
-        document.getElementById("predictButton");
-
-
-    // =====================================================
-    // CHECK REQUIRED ELEMENTS
-    // =====================================================
+    const predictButton = document.getElementById("predictButton");
+    const explainabilitySection = document.getElementById("explainabilitySection");
+    const historyStatus = document.getElementById("historyStatus");
+    const historyTableBody = document.getElementById("historyTableBody");
+    const refreshHistoryButton = document.getElementById("refreshHistory");
 
     if (!form) {
-        console.error("creditForm not found in index.html");
+        console.error('Missing form with id="creditForm". Check index.html.');
         return;
     }
 
-    if (!predictButton) {
-        console.error("predictButton not found in index.html");
-        return;
+    function getValue(id, numeric = false) {
+        const element = document.getElementById(id);
+        if (!element) throw new Error("Missing form field: " + id);
+        return numeric ? Number(element.value) : element.value;
     }
 
+    function escapeHTML(value) {
+        return String(value ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
 
-    // =====================================================
-    // FORM SUBMIT
-    // =====================================================
+    function renderExplanation(items, valueKey, title) {
+        if (!Array.isArray(items) || items.length === 0) {
+            return '<p class="no-explanation">No valid ' + title +
+                ' explanation is available.</p>';
+        }
 
-    form.addEventListener("submit", async (event) => {
+        const validItems = items.map(item => ({
+            feature: String(item.feature ?? "Unknown feature"),
+            value: Number(item[valueKey])
+        })).filter(item => Number.isFinite(item.value));
 
-        event.preventDefault();
+        if (!validItems.length) {
+            return '<p class="no-explanation">No valid ' + title +
+                ' explanation is available.</p>';
+        }
 
+        const maxImpact = Math.max(
+            ...validItems.map(item => Math.abs(item.value)),
+            0.000001
+        );
 
-        // -------------------------------------------------
-        // BUTTON LOADING STATE
-        // -------------------------------------------------
+        return validItems.map(item => {
+            const increasing = item.value >= 0;
+            const width = Math.max(
+                3, Math.abs(item.value) / maxImpact * 100
+            );
+            const colorClass = increasing
+                ? "impact-increase" : "impact-decrease";
+            const direction = increasing
+                ? "Increases risk" : "Decreases risk";
 
-        predictButton.disabled = true;
-        predictButton.innerHTML = "⏳ Analyzing...";
+            return `
+                <details class="impact-card ${colorClass}">
+                    <summary class="impact-summary">
+                        <div class="impact-topline">
+                            <span class="impact-feature">
+                                ${escapeHTML(item.feature)}
+                            </span>
+                            <span class="impact-value">
+                                ${item.value > 0 ? "+" : ""}${item.value.toFixed(3)}
+                            </span>
+                        </div>
+                        <div class="impact-track">
+                            <div class="impact-fill" style="width:${width}%"></div>
+                        </div>
+                        <span class="impact-direction">
+                            ${increasing ? "↑" : "↓"} ${direction}
+                        </span>
+                    </summary>
+                    <div class="impact-details">
+                        This ${title} value is ${item.value.toFixed(4)}.
+                        Its sign indicates the direction of its contribution.
+                    </div>
+                </details>`;
+        }).join("");
+    }
 
+    async function loadPredictionHistory() {
+        if (!historyStatus || !historyTableBody) return;
+
+        historyStatus.textContent = "Loading prediction history...";
+        historyTableBody.replaceChildren();
 
         try {
+            const response = await fetch("/history");
+            const data = await response.json();
 
-            // =================================================
-            // COLLECT FORM DATA
-            // =================================================
+            if (!response.ok) {
+                throw new Error(data.error || "Could not load history.");
+            }
 
+            const history = Array.isArray(data.history)
+                ? data.history : [];
+
+            if (history.length === 0) {
+                historyStatus.textContent = "No saved predictions yet.";
+                return;
+            }
+
+            history.forEach(item => {
+                const row = document.createElement("tr");
+                const score = Number(item.risk_score);
+
+                const values = [
+                    item.id ?? "—",
+                    Number.isFinite(score)
+                        ? score.toFixed(2) + "%" : "—",
+                    item.risk_level ?? "—",
+                    item.created_at ?? "—"
+                ];
+
+                values.forEach(value => {
+                    const cell = document.createElement("td");
+                    cell.textContent = String(value);
+                    cell.style.padding = "12px";
+                    cell.style.borderBottom = "1px solid #39364c";
+                    row.appendChild(cell);
+                });
+
+                historyTableBody.appendChild(row);
+            });
+
+            historyStatus.textContent =
+                `Showing ${history.length} saved prediction(s).`;
+
+        } catch (error) {
+            console.error("History loading error:", error);
+            historyStatus.textContent =
+                "Could not load history. Check that Flask is running.";
+        }
+    }
+
+    form.addEventListener("submit", async event => {
+        event.preventDefault();
+
+        if (predictButton) {
+            predictButton.disabled = true;
+            predictButton.textContent = "⏳ Analyzing...";
+        }
+
+        try {
             const formData = {
-
-                checking_status:
-                    document.getElementById("checking_status").value,
-
-                duration:
-                    Number(document.getElementById("duration").value),
-
-                credit_history:
-                    document.getElementById("credit_history").value,
-
-                purpose:
-                    document.getElementById("purpose").value,
-
-                credit_amount:
-                    Number(document.getElementById("credit_amount").value),
-
-                savings_status:
-                    document.getElementById("savings_status").value,
-
-                employment:
-                    document.getElementById("employment").value,
-
-                installment_rate:
-                    Number(document.getElementById("installment_rate").value),
-
-                personal_status:
-                    document.getElementById("personal_status").value,
-
-                other_debtors:
-                    document.getElementById("other_debtors").value,
-
-                residence_since:
-                    Number(document.getElementById("residence_since").value),
-
-                property:
-                    document.getElementById("property").value,
-
-                age:
-                    Number(document.getElementById("age").value),
-
-                other_installment_plans:
-                    document.getElementById("other_installment_plans").value,
-
-                housing:
-                    document.getElementById("housing").value,
-
-                existing_credits:
-                    Number(document.getElementById("existing_credits").value),
-
-                job:
-                    document.getElementById("job").value,
-
-                num_dependents:
-                    Number(document.getElementById("num_dependents").value),
-
-                telephone:
-                    document.getElementById("telephone").value,
-
-                foreign_worker:
-                    document.getElementById("foreign_worker").value
+                checking_status: getValue("checking_status"),
+                duration: getValue("duration", true),
+                credit_history: getValue("credit_history"),
+                purpose: getValue("purpose"),
+                credit_amount: getValue("credit_amount", true),
+                savings_status: getValue("savings_status"),
+                employment: getValue("employment"),
+                installment_rate: getValue("installment_rate", true),
+                personal_status: getValue("personal_status"),
+                other_debtors: getValue("other_debtors"),
+                residence_since: getValue("residence_since", true),
+                property: getValue("property"),
+                age: getValue("age", true),
+                other_installment_plans: getValue("other_installment_plans"),
+                housing: getValue("housing"),
+                existing_credits: getValue("existing_credits", true),
+                job: getValue("job"),
+                num_dependents: getValue("num_dependents", true),
+                telephone: getValue("telephone"),
+                foreign_worker: getValue("foreign_worker")
             };
 
-
-            console.log("Sending data:", formData);
-
-
-            // =================================================
-            // SEND DATA TO FLASK
-            // =================================================
-
             const response = await fetch("/predict", {
-
                 method: "POST",
-
-                headers: {
-                    "Content-Type": "application/json"
-                },
-
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(formData)
             });
 
-
-            // =================================================
-            // READ SERVER RESPONSE
-            // =================================================
-
             const result = await response.json();
-            // =========================================================
-            // APPLICANT SUMMARY
-            // =========================================================
+
+            if (!response.ok) {
+                throw new Error(result.error || "Prediction failed.");
+            }
 
             const applicantSummary =
                 document.getElementById("applicantSummary");
 
             if (applicantSummary && result.applicant_summary) {
+                applicantSummary.replaceChildren();
 
-                const summary = result.applicant_summary;
+                Object.entries(result.applicant_summary).forEach(
+                    ([key, value]) => {
+                        const item = document.createElement("div");
+                        item.className = "summary-item";
 
-                applicantSummary.innerHTML = "";
+                        const label = document.createElement("span");
+                        label.className = "summary-label";
+                        label.textContent = key
+                            .replace(/_/g, " ")
+                            .replace(/\b\w/g, char => char.toUpperCase());
 
-                Object.entries(summary).forEach(([key, value]) => {
+                        const data = document.createElement("strong");
+                        data.className = "summary-value";
+                        data.textContent = String(value);
 
-                    const item = document.createElement("div");
-                    item.className = "summary-item";
-
-                    const label = document.createElement("span");
-                    label.className = "summary-label";
-
-                    label.textContent = key
-                        .replace(/_/g, " ")
-                        .replace(/\b\w/g, char => char.toUpperCase());
-
-                    const data = document.createElement("strong");
-                    data.className = "summary-value";
-                    data.textContent = value;
-
-                    item.appendChild(label);
-                    item.appendChild(data);
-
-                    applicantSummary.appendChild(item);
-                });
+                        item.append(label, data);
+                        applicantSummary.appendChild(item);
+                    }
+                );
             }
+
             const predictionTime =
                 document.getElementById("predictionTime");
 
             if (predictionTime && result.prediction_time) {
-                predictionTime.textContent =
-                    result.prediction_time;
+                predictionTime.textContent = result.prediction_time;
             }
 
-            console.log("Server response:", result);
+            if (resultSection) resultSection.style.display = "block";
 
+            const isHighRisk = Number(result.prediction) === 1;
 
-            if (!response.ok) {
-
-                throw new Error(
-                    result.error || "Prediction failed"
-                );
+            if (riskLabel) {
+                riskLabel.textContent = isHighRisk
+                    ? "🔴 HIGH RISK" : "🟢 LOW RISK";
+                riskLabel.className = isHighRisk
+                    ? "high-risk" : "low-risk";
             }
-
-
-            // =================================================
-            // SHOW RESULT SECTION
-            // =================================================
-
-            if (resultSection) {
-                resultSection.style.display = "block";
-            }
-
-
-            // =================================================
-            // SHOW RISK PREDICTION
-            // =================================================
-
-            if (Number(result.prediction) === 1) {
-
-                riskLabel.textContent = "🔴 HIGH RISK";
-
-                riskLabel.className = "high-risk";
-
-            } else {
-
-                riskLabel.textContent = "🟢 LOW RISK";
-
-                riskLabel.className = "low-risk";
-            }
-
-
-            // =================================================
-            // SHOW PROBABILITIES
-            // =================================================
 
             if (lowRisk) {
-
                 lowRisk.textContent =
-                    Number(
-                        result.low_risk_probability
-                    ).toFixed(2) + "%";
+                    Number(result.low_risk_probability).toFixed(2) + "%";
             }
-
 
             if (highRisk) {
-
                 highRisk.textContent =
-                    Number(
-                        result.high_risk_probability
-                    ).toFixed(2) + "%";
+                    Number(result.high_risk_probability).toFixed(2) + "%";
             }
-            // Update Risk Score
+
             const riskScore = document.getElementById("riskScore");
             const riskLevel = document.getElementById("riskLevel");
             const riskMessage = document.getElementById("riskMessage");
             const riskMeterFill = document.getElementById("riskMeterFill");
+            const score = Number(result.risk_score);
 
             if (riskScore) {
-                riskScore.textContent =
-                    Number(result.risk_score).toFixed(2) + "%";
+                riskScore.textContent = Number.isFinite(score)
+                    ? score.toFixed(2) + "%" : "—";
             }
 
             if (riskLevel) {
-
-                const score = Number(result.risk_score);
-
-                riskLevel.classList.remove(
-                    "risk-medium",
-                    "risk-high"
-                );
-
+                riskLevel.classList.remove("risk-medium", "risk-high");
                 riskLevel.textContent =
-                    result.risk_level + " RISK";
+                    `${result.risk_level ?? (isHighRisk ? "HIGH" : "LOW")} RISK`;
 
                 if (score >= 60) {
                     riskLevel.classList.add("risk-high");
-                }
-                else if (score >= 30) {
+                } else if (score >= 30) {
                     riskLevel.classList.add("risk-medium");
                 }
             }
 
             if (riskMessage) {
-                riskMessage.textContent =
-                    result.risk_message;
+                riskMessage.textContent = result.risk_message ?? "";
             }
 
             if (riskMeterFill) {
+                const safeScore = Number.isFinite(score)
+                    ? Math.min(100, Math.max(0, score)) : 0;
 
-                const score = Number(result.risk_score);
-
-                // Start from 0%
                 riskMeterFill.style.width = "0%";
-
-                // Animate to the actual risk score
-                setTimeout(() => {
-                    riskMeterFill.style.width = score + "%";
-                }, 100);
-            }
-
-
-            // =================================================
-            // SHOW EXPLAINABILITY
-            // =================================================
-
-            if (explainabilitySection) {
-
-                explainabilitySection.style.display = "block";
-
-
-                // =================================================
-                // SHAP DATA
-                // =================================================
-
-
-                const shapHTML =
-                    Array.isArray(result.shap_explanation) &&
-                        result.shap_explanation.length > 0
-                        ? (() => {
-                            const items = result.shap_explanation
-                                .map(item => ({
-                                    feature: String(item.feature ?? "Unknown feature"),
-                                    value: Number(item.shap_value)
-                                }))
-                                .filter(item => Number.isFinite(item.value));
-
-                            const maxImpact = Math.max(
-                                ...items.map(item => Math.abs(item.value)),
-                                0.000001
-                            );
-
-                            return items.map(item => {
-                                const value = item.value;
-                                const increasing = value >= 0;
-                                const width = Math.max(
-                                    3,
-                                    (Math.abs(value) / maxImpact) * 100
-                                );
-
-                                const direction = increasing
-                                    ? "Increases risk"
-                                    : "Decreases risk";
-
-                                const colorClass = increasing
-                                    ? "impact-increase"
-                                    : "impact-decrease";
-
-                                return `
-                    <details class="impact-card ${colorClass}">
-                        <summary class="impact-summary">
-                            <div class="impact-topline">
-                                <span class="impact-feature">
-                                    ${item.feature.replace(/&/g, "&amp;")
-                                        .replace(/</g, "&lt;")
-                                        .replace(/>/g, "&gt;")
-                                        .replace(/"/g, "&quot;")}
-                                </span>
-                                <span class="impact-value">
-                                    ${value > 0 ? "+" : ""}${value.toFixed(3)}
-                                </span>
-                            </div>
-
-                            <div class="impact-track">
-                                <div
-                                    class="impact-fill"
-                                    style="width:${width}%"
-                                ></div>
-                            </div>
-
-                            <span class="impact-direction">
-                                ${increasing ? "↑" : "↓"} ${direction}
-                            </span>
-                        </summary>
-
-                        <div class="impact-details">
-                            This feature's SHAP value for this prediction is
-                            ${value.toFixed(4)}. Its sign indicates the
-                            direction of its contribution in the model's
-                            explanation.
-                        </div>
-                    </details>
-                `;
-                            }).join("");
-                        })()
-                        : `<p class="no-explanation">No valid SHAP explanation is available.</p>`;
-
-
-
-                // =================================================
-                // LIME DATA
-                // =================================================
-
-
-                const limeHTML =
-                    Array.isArray(result.lime_explanation) &&
-                        result.lime_explanation.length > 0
-                        ? (() => {
-                            const items = result.lime_explanation
-                                .map(item => ({
-                                    feature: String(item.feature ?? "Unknown feature"),
-                                    value: Number(item.weight)
-                                }))
-                                .filter(item => Number.isFinite(item.value));
-
-                            const maxImpact = Math.max(
-                                ...items.map(item => Math.abs(item.value)),
-                                0.000001
-                            );
-
-                            return items.map(item => {
-                                const value = item.value;
-                                const increasing = value >= 0;
-
-                                const width = Math.max(
-                                    3,
-                                    (Math.abs(value) / maxImpact) * 100
-                                );
-
-                                const direction = increasing
-                                    ? "Increases risk"
-                                    : "Decreases risk";
-
-                                const colorClass = increasing
-                                    ? "impact-increase"
-                                    : "impact-decrease";
-
-                                const safeFeature = item.feature
-                                    .replace(/&/g, "&amp;")
-                                    .replace(/</g, "&lt;")
-                                    .replace(/>/g, "&gt;")
-                                    .replace(/"/g, "&quot;");
-
-                                return `
-                    <details class="impact-card ${colorClass}">
-                        <summary class="impact-summary">
-                            <div class="impact-topline">
-                                <span class="impact-feature">
-                                    ${safeFeature}
-                                </span>
-
-                                <span class="impact-value">
-                                    ${value > 0 ? "+" : ""}${value.toFixed(3)}
-                                </span>
-                            </div>
-
-                            <div class="impact-track">
-                                <div
-                                    class="impact-fill"
-                                    style="width:${width}%"
-                                ></div>
-                            </div>
-
-                            <span class="impact-direction">
-                                ${increasing ? "↑" : "↓"} ${direction}
-                            </span>
-                        </summary>
-
-                        <div class="impact-details">
-                            This LIME weight is ${value.toFixed(4)} for this
-                            feature's local explanation. Its sign indicates
-                            the direction of the contribution according to
-                            the model's local explanation.
-                        </div>
-                    </details>
-                `;
-                            }).join("");
-                        })()
-                        : `<p class="no-explanation">No valid LIME explanation is available.</p>`;
-
-
-
-                // =================================================
-                // DISPLAY SHAP + LIME
-                // =================================================
-
-
-                explainabilitySection.innerHTML = `
-    <div class="explanation-result interactive-explanation">
-
-        <div class="explanation-heading">
-            <span class="explanation-icon">📊</span>
-            <div>
-                <h3>SHAP Explanation</h3>
-                <p>Discover which features influence this prediction.</p>
-            </div>
-        </div>
-
-        <div class="explanation-legend">
-            <span class="legend-up">↑ Increases risk</span>
-            <span class="legend-down">↓ Decreases risk</span>
-        </div>
-
-        <div class="shap-list">
-            ${shapHTML}
-        </div>
-
-        <div class="explanation-heading lime-heading">
-            <span class="explanation-icon">🔎</span>
-            <div>
-                <h3>LIME Explanation</h3>
-                <p>Explore the rules behind this individual prediction.</p>
-            </div>
-        </div>
-
-        <div class="lime-list">
-            ${limeHTML}
-        </div>
-
-        <p class="explanation-note">
-            These explanations describe how the model reached its prediction;
-            they do not guarantee that a loan will default or be repaid.
-        </p>
-
-    </div>
-`;
-
-            }
-
-
-            // =================================================
-            // SCROLL TO RESULT
-            // =================================================
-
-            if (resultSection) {
-
-                resultSection.scrollIntoView({
-
-                    behavior: "smooth",
-
-                    block: "start"
-
+                requestAnimationFrame(() => {
+                    riskMeterFill.style.width = safeScore + "%";
                 });
             }
 
+            if (explainabilitySection) {
+                const shapHTML = renderExplanation(
+                    result.shap_explanation, "shap_value", "SHAP"
+                );
+                const limeHTML = renderExplanation(
+                    result.lime_explanation, "weight", "LIME"
+                );
+
+                explainabilitySection.style.display = "block";
+                explainabilitySection.innerHTML = `
+                    <div class="explanation-result interactive-explanation">
+                        <div class="explanation-heading">
+                            <span class="explanation-icon">📊</span>
+                            <div>
+                                <h3>SHAP Explanation</h3>
+                                <p>Discover which features influence this prediction.</p>
+                            </div>
+                        </div>
+                        <div class="explanation-legend">
+                            <span class="legend-up">↑ Increases risk</span>
+                            <span class="legend-down">↓ Decreases risk</span>
+                        </div>
+                        <div class="shap-list">${shapHTML}</div>
+
+                        <div class="explanation-heading lime-heading">
+                            <span class="explanation-icon">🔎</span>
+                            <div>
+                                <h3>LIME Explanation</h3>
+                                <p>Explore the rules behind this individual prediction.</p>
+                            </div>
+                        </div>
+                        <div class="lime-list">${limeHTML}</div>
+                        <p class="explanation-note">
+                            These explanations describe how the model reached
+                            its prediction; they do not guarantee loan outcomes.
+                        </p>
+                    </div>`;
+            }
+
+            if (resultSection) {
+                resultSection.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start"
+                });
+            }
+
+            await loadPredictionHistory();
 
         } catch (error) {
-
-            // =================================================
-            // ERROR HANDLING
-            // =================================================
-
-            console.error(
-                "Prediction error:",
-                error
-            );
-
-            alert(
-                "Prediction failed: " +
-                error.message
-            );
-
+            console.error("Prediction error:", error);
+            alert("Prediction failed: " + error.message);
+        } finally {
+            if (predictButton) {
+                predictButton.disabled = false;
+                predictButton.innerHTML =
+                    "<span>✦</span> Predict Credit Risk <span>→</span>";
+            }
         }
-
-
-        // =================================================
-        // RESET BUTTON
-        // =================================================
-
-        predictButton.disabled = false;
-
-        predictButton.innerHTML =
-            "<span>✦</span> Predict Credit Risk <span>→</span>";
-
     });
 
+    if (refreshHistoryButton) {
+        refreshHistoryButton.addEventListener(
+            "click", loadPredictionHistory
+        );
+    }
+
+    loadPredictionHistory();
 });

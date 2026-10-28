@@ -7,6 +7,7 @@ import shap
 
 from lime.lime_tabular import LimeTabularExplainer
 from datetime import datetime
+from database import initialize_database, save_prediction, get_prediction_history
 
 
 # =========================================================
@@ -14,6 +15,7 @@ from datetime import datetime
 # =========================================================
 
 app = Flask(__name__)
+initialize_database()
 
 
 # =========================================================
@@ -158,6 +160,14 @@ def home():
     return render_template(
         "index.html"
     )
+@app.route("/history", methods=["GET"])
+def prediction_history():
+    try:
+        history = get_prediction_history(limit=100)
+        return jsonify({"history": history})
+    except Exception as error:
+        print("DATABASE HISTORY ERROR:", error)
+        return jsonify({"error": "Could not load prediction history"}), 500
 
 
 # =========================================================
@@ -790,9 +800,13 @@ def predict():
         )
 
 
+        
+        save_prediction(input_data, response)
+
         return jsonify(
             response
         )
+
 
 
     # =====================================================

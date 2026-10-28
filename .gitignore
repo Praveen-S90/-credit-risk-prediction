@@ -1,8 +1,28 @@
 
+# Python virtual environments
 venv/
 venv312/
 venv315/
+.venv/
+
+# Python cache files
 __pycache__/
 *.py[cod]
+
+# Environment variables and secrets
 .env
+.env.*
+
+# IDE and operating-system files
+.vscode/
+.idea/
 .DS_Store
+Thumbs.db
+
+# Logs and test output
+*.log
+.pytest_cache/
+.coverage
+htmlcov/
+# Local prediction history database
+credit_risk.db
